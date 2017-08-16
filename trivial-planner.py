@@ -57,10 +57,7 @@ class State(object):
 def action_reconstruction_filtering(y):
     # filtering based on OAE action reconstruction
     action_reconstruction = oae.encode_action(y).round()
-    # loss = bce(available_actions, action_reconstruction, (1,2))
-    loss = mae(available_actions, action_reconstruction, (1,2))
-    # print(loss)
-    return y[np.where(loss < 0.01)]
+    return y[np.all(np.equal(available_actions, action_reconstruction),axis=(1,2))]
 
 def state_reconstruction_from_oae_filtering(y):
     action_reconstruction = oae.encode_action(y)
