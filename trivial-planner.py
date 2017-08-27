@@ -121,8 +121,15 @@ class Searcher:
         import queue
         self.open_list = queue.PriorityQueue()
         self.close_list = {}
+        self.stats = {
+            "generated_including_duplicate":1, # init
+            "generated":1,
+            "expanded":0,
+            "reopened":0,
+        }
 
     def successors(self,state):
+        self.stats["expanded"] += 1
         try:
             reductions = []
             s = state.state
@@ -139,15 +146,30 @@ class Searcher:
             # for now, assume they are all valid
             for i,succ in enumerate(y[:,self.N:]):
                 # print(succ)
+                self.stats["generated_including_duplicate"] += 1
                 hash_value = state_hash(succ)
                 if hash_value in self.close_list:
                     yield self.close_list[hash_value]
                 else:
+                    self.stats["generated"] += 1
                     _succ = State(succ)
                     self.close_list[hash_value] = _succ
                     yield _succ
         finally:
             print("->".join(map(str,reductions)))
+
+    def search(self,init,goal,distance):
+        return self.search_around(self,init,goal,distance)
+
+    def search_around(self,init,goal,distance):
+        try:
+            return self.search_primary(self,init,goal,distance)
+        finally:
+            print("**************** Search statistics ****************")
+            print(self.stats)
+
+    def search_primary(self,init,goal,distance):
+        pass
 
 class StateBasedGoalDetection:
     def goalp(self,state,goal):
@@ -159,7 +181,7 @@ class ReconstructionGoalDetection:
                    sae.decode_binary(np.expand_dims(goal, 0))) < image_threshold
 
 class Astar(Searcher,StateBasedGoalDetection):
-    def search(self,init,goal,distance):
+    def search_primary(self,init,goal,distance):
         self.N = len(init)
         heuristic = lambda x: distance(x, goal)
 
@@ -193,6 +215,8 @@ class Astar(Searcher,StateBasedGoalDetection):
                 for c in self.successors(state):
                     new_g = state.g + 1
                     if c.g > new_g:
+                        if c.status == CLOSED:
+                            self.stats["reopened"] += 1
                         c.g      = new_g
                         c.parent = state
                         c.status = OPEN
@@ -200,7 +224,7 @@ class Astar(Searcher,StateBasedGoalDetection):
                         self.open_list.put((c.g+c.h, c.h, c.hash()))
 
 class GBFS(Searcher,StateBasedGoalDetection):
-    def search(self,init,goal,distance):
+    def search_primary(self,init,goal,distance):
         self.N = len(init)
         heuristic = lambda x: distance(x, goal)
 
