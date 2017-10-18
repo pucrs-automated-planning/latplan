@@ -25,7 +25,7 @@ cae = None
 combined_discriminator = None
 
 available_actions = None
-inflation = 5
+inflation = 20
 
 image_threshold = 0.1
 image_diff = mae
@@ -183,10 +183,14 @@ class Astar(Searcher,StateBasedGoalDetection):
         self.N = len(init)
         heuristic = lambda x: distance(x, goal)
 
-        _init = State(init, g=0, h=heuristic(init))
+        # augment the initial state
+        for i in range(inflation):
+            _init = State(init, g=0, h=heuristic(init))
 
-        self.open_list.put((_init.g + _init.h, _init.h, _init.hash()))
-        self.close_list[_init.hash()] = _init
+            self.open_list.put((_init.g + _init.h, _init.h, _init.hash()))
+            self.close_list[_init.hash()] = _init
+
+            init = sae.autodecode_binary(np.array([init]))[0].astype(int)
 
         best_f = -1
         best_h = math.inf
