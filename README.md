@@ -13,16 +13,17 @@ To install and run latplan you have the following options:
 - Run **latplan/install.sh**
 - Follow further instructions in the original readme inside the #latplan# folder
 ## LSA Leonardo's virtual env
-: source /home/leonardo/latplan/latplan/bin/activate
-
+```
+source /home/leonardo/latplan/latplan/bin/activate
+```
 ## Running latplan
 Currently **test_all.sh** does not seem to be working due to path issues, trying to fix that. Additionally **do-everything.sh** can be only executed as root.
 To train the networks use:
-
-: train_all.sh
-
+```
+./train_all.sh
+```
 or
-
-: train_all_fast.sh
-
+```
+./train_all_fast.sh
+```
 Output is going to "samples/<problem_name>". Encoder and decoder weights are being saved there.
