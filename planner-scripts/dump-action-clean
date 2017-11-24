@@ -1,0 +1,40 @@
+#!/bin/bash
+#-*- mode:sh -*-
+
+################################################################
+#### default options
+
+################################################################
+#### main
+
+fdscript=$(dirname $(readlink -ef $0))/dump-action/fast-downward.py
+
+plan(){
+    OPTIONS=${OPTIONS:-"--alias seq-sat-lama-2011"}
+    vechodo $fdscript \
+        --run-all \
+        --search-memory-limit 2G \
+        --plan-file $probdir/$probname.plan \
+        domain.pddl problem.pddl \
+        $OPTIONS
+}
+
+finalize (){
+    :
+}
+
+negatively-proven (){
+    grep "Completely explored state space" log &> /dev/null
+}
+
+report-results (){
+    awk "/Plan cost:/{print $2}" log | sort | head -n 1
+}
+
+plan-found (){
+    ls $probdir/$probname.plan*
+}
+
+################################################################
+
+. $SCRDIR/common.sh

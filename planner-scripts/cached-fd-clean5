@@ -1,0 +1,87 @@
+#!/bin/bash
+#-*- mode:sh -*-
+
+################################################################
+#### default options
+
+################################################################
+#### main
+
+find-fd-py (){
+    find $1 -name "fast-downward.py"
+}
+
+find-fd-upward (){
+    echo "finding FD installation from $1 ..."
+    if [[ -d $1/downward ]]
+    then
+        fdscript=$(readlink -ef $(find-fd-py $1/downward))
+    else
+        if [[ $1 == / ]]
+        then
+            echo "failed to find Fast Downward installation (fast-downward.py) !"
+            exit 1
+        else
+            find-fd-upward $(readlink -ef $1/..)
+        fi
+    fi
+}
+
+find-fd-upward $(dirname $(readlink -ef $0))
+
+tc=$HOME/.fd-cache/translate/
+pc=$HOME/.fd-cache/preprocess/
+mkdir -pv $pc $tc
+
+log_options=$(if $VERBOSE ; then echo "--log-level info" ; else echo "--log-level warning" ; fi)
+
+plan(){
+    echo $(whoami)@$(hostname)
+    OPTIONS=${OPTIONS:-"--search astar(lmcut())"}
+    md5=$(cat domain.pddl problem.pddl | md5sum | cut -d' ' -f1)
+    echo "md5 : $md5"
+    (
+        flock 9
+        if [ -f $pc/$md5 ]
+        then
+            echo "reusing the preprocess output : $pc/$md5"
+            cp $pc/$md5 output
+        else
+            if [ -f $tc/$md5 ]
+            then
+                echo "reusing the translation output : $tc/$md5"
+                cp $tc/$md5 output.sas
+            else
+                echodo $fdscript --translate $log_options domain.pddl problem.pddl \
+                    && cp output.sas $tc/$md5
+            fi
+            
+            echodo $fdscript --preprocess $log_options output.sas \
+                && cp output $pc/$md5
+        fi
+    ) 9>$pc/$md5.lock
+    
+    echodo $fdscript --search --validate --search-time-limit 300 \
+        --plan-file $probdir/$probname.plan $log_options output \
+        $OPTIONS
+}
+
+finalize (){
+    :
+}
+
+negatively-proven (){
+    grep "Completely explored state space" log &> /dev/null
+}
+
+report-results (){
+    awk "/Plan cost:/{print $2}" log | sort | head -n 1
+}
+
+plan-found (){
+    ls $probdir/$probname.plan*
+}
+
+################################################################
+
+. $SCRDIR/common.sh

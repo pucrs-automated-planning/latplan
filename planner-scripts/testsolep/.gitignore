@@ -1,0 +1,7 @@
+*.plan
+*.log
+*macros*
+*txt
+*out
+*summary*
+*.soln

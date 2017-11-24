@@ -1,0 +1,45 @@
+#!/bin/bash
+#-*- mode:sh -*-
+
+################################################################
+#### default options
+
+
+
+################################################################
+#### main
+
+plan(){
+    vecho $(whoami)@$(hostname)
+    cp -t . $probdir/t01.pddl $probdir/t02.pddl $probdir/t03.pddl
+    vechodo $SCRDIR/sol-ep-base.sh domain.pddl problem.pddl t01.pddl t02.pddl t03.pddl
+}
+
+finalize (){
+    pwd
+    if [[ -e pro.soln ]]
+    then
+        cat pro.soln | grep -v "^Time" > plan
+        [[ $(cat plan | wc -l) -gt 0 ]] && vcp plan $probdir/$probname.plan
+    else
+        vecho "No plan found!"
+    fi
+}
+
+negatively-proven (){
+    grep "problem proven unsolvable" log
+}
+
+report-results (){
+    local cost=$(cat plan | wc -l)
+    [[ -e plan && $cost -gt 0 ]] && echo "Plan cost: " $cost
+}
+
+plan-found (){
+    local cost=$(cat plan | wc -l)
+    [[ -e plan && $cost -gt 0 ]]
+}
+
+################################################################
+
+. $SCRDIR/common-solep.sh

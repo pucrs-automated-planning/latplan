@@ -1,0 +1,63 @@
+#!/bin/bash
+#-*- mode:sh -*-
+
+################################################################
+#### default options
+
+################################################################
+#### main
+
+find-fd-py (){
+    find $1 -name "fast-downward.py"
+}
+
+find-fd-upward (){
+    echo "finding FD installation from $1 ..."
+    if [[ -d $1/downward ]]
+    then
+        fdscript=$(readlink -ef $(find-fd-py $1/downward))
+    else
+        if [[ $1 == / ]]
+        then
+            echo "failed to find Fast Downward installation (fast-downward.py) !"
+            exit 1
+        else
+            find-fd-upward $(readlink -ef $1/..)
+        fi
+    fi
+}
+
+find-fd-upward $(dirname $(readlink -ef $0))
+
+log_options=$(if $VERBOSE ; then echo "--log-level info" ; else echo "--log-level warning" ; fi)
+
+plan(){
+    echo $(whoami)@$(hostname)
+    OPTIONS=${OPTIONS:-"--search astar(lmcut())"}
+
+    time echodo $fdscript --translate $log_options domain.pddl problem.pddl
+    time echodo $fdscript --preprocess $log_options output.sas
+    time echodo $fdscript --search --validate $OPTIONS \
+        --plan-file $probdir/$probname.plan $log_options output \
+        
+}
+
+finalize (){
+    :
+}
+
+negatively-proven (){
+    grep "Completely explored state space" log &> /dev/null
+}
+
+report-results (){
+    awk "/Plan cost:/{print $2}" log | sort | head -n 1
+}
+
+plan-found (){
+    ls $probdir/$probname.plan*
+}
+
+################################################################
+
+. $SCRDIR/common.sh
