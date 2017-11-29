@@ -13,3 +13,4 @@ learn/events*
 *.bin
 *.lprof
 /samples/table
+*.zip
