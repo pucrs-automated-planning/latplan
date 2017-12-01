@@ -116,15 +116,18 @@ def prune_actions(actions):
 		else:
 			effect_dict[k] = [a]
 	actions_set = set()
+	cont = 0
 	for key in effect_dict.keys():
 		acts = effect_dict[key]
 		new_pre_cond = [0] * len(acts[0].pre_cond)
 		for a in acts:
+			cont += 1
 			new_pre_cond = _xor(new_pre_cond,a.pre_cond)
-		new_action = Action(acts[0].parameters, new_pre_cond, acts[0].effect)
+		new_action = Action(_or(new_pre_cond,acts[0].effect), new_pre_cond, acts[0].effect)
 		actions_set.add(new_action)
 	print len(effect_dict.keys())
 	print len(actions_set)
+	print 'xors' , cont
 	return actions_set
 
 #generate_ppdl_action(p,pre,eff,'ac1')
@@ -136,4 +139,4 @@ print len(actions)
 pruned = prune_actions(actions)
 pdll_actions = generate_all_actions_pddl(pruned)
 export_pddl(pdll_actions, 'new_domain.pddl')
-generate_problem([0,0,1,0,0,1], [1,0,0,0,1,1])
+#generate_problem([0,0,1,0,0,1], [1,0,0,0,1,1])
