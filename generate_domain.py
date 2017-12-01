@@ -1,6 +1,6 @@
 from action import *
 #Latent layer size
-N = 49
+N = 36
 
 def generate_action(state1, state2):
 	parameter = _or(state1,state2) 
@@ -40,6 +40,15 @@ def _or(self,other):
 def _xor(self,other):
         return [se ^ so for se,so in zip(self,other)]
 
+def generate_all_actions_pddl(list_actions):
+	actions = []
+	counter = 1
+	for a in list_actions:
+		actions.append(generate_ppdl_action(a.parameters, a.pre_cond, a.effect, 'a'+ str(counter)))
+		counter += 1
+	return actions
+
+
 def generate_all_actions(list_actions):
 	actions = []
 	counter = 1
@@ -47,11 +56,9 @@ def generate_all_actions(list_actions):
 	for act in list_actions:
 		p, pre, eff = generate_action(act[0],act[1])
 		a = Action(p, pre, eff)
-		if a not in actions_set:
-			actions.append(generate_ppdl_action(a.parameters, a.pre_cond, a.effect, 'a'+ str(counter)))
-			counter += 1
-			actions_set.add(a)
-	return actions
+		actions_set.add(a)
+	return actions_set
+
 
 def export_pddl(actions, path):
 	txt = '(define (domain generated-domain) \n'
@@ -59,7 +66,7 @@ def export_pddl(actions, path):
   	txt += '    (:predicates \n'
   	for i in range(N):
   		txt += '        (p' +str(i) + ' ?v' + str(i) + ') \n'
-  	txt += '    )'
+  	txt += '    )\n'
   	for action in actions:
   		txt += action
   	txt += ')'
@@ -86,10 +93,47 @@ def generate_problem(init_state, goal_state):
 		else: txt+='       (not ('+ 'p' + str(pre) + ' o'+ str(pre) + '))' +'\n'
 	txt += '      )\n'
 	txt += '    )\n)'
-	print txt
- 
+	return txt
+
+def read_csv_actions(path):
+	data = open(path, 'r')
+	actions = []
+	for d in data:
+		d = d.split()
+		line = [int(i) for i in d]
+		s1 = line[:len(line)/2]
+		s2 = line[len(line)/2:]
+		actions.append((s1,s2))
+	return actions
+
+def prune_actions(actions):
+	meta_actions = []
+	effect_dict = dict()
+	for a in actions:
+		k = str(a.effect)
+		if k in effect_dict:
+			effect_dict[k].append(a)
+		else:
+			effect_dict[k] = [a]
+	actions_set = set()
+	for key in effect_dict.keys():
+		acts = effect_dict[key]
+		new_pre_cond = [0] * len(acts[0].pre_cond)
+		for a in acts:
+			new_pre_cond = _xor(new_pre_cond,a.pre_cond)
+		new_action = Action(acts[0].parameters, new_pre_cond, acts[0].effect)
+		actions_set.add(new_action)
+	print len(effect_dict.keys())
+	print len(actions_set)
+	return actions_set
+
 #generate_ppdl_action(p,pre,eff,'ac1')
 
 #export_pddl(generate_all_actions([([0,0,1,0,0,1], [1,0,0,0,1,1]), ( [1,0,0,0,1,1], [0,0,1,0,0,1])]), 'domain.pddl')
-
+transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv')
+actions = generate_all_actions(transitions)
+print len(actions)
+pruned = prune_actions(actions)
+pdll_actions = generate_all_actions_pddl(pruned)
+export_pddl(pdll_actions, 'new_domain.pddl')
 generate_problem([0,0,1,0,0,1], [1,0,0,0,1,1])
