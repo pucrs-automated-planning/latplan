@@ -19,11 +19,12 @@ def generate_ppdl_action(parameter, pre_cond, effect, action_name):
 	action = '(:action ' + str(action_name) + '\n'
 	action += '    :parameters ('
 	for par in range(len(parameter)):
-		if parameter[par]: action+= '?v' + str(par) + ' '
+		if abs(parameter[par]): action+= '?v' + str(par) + ' '
 	action += ')'+ '\n'
 	action += '    :precondition (and' + '\n'
 	for pre in range(len(pre_cond)):
-		if pre_cond[pre]:  action+='        ('+ 'p' + str(pre) + ' ?v'+ str(pre) + ')' +'\n'
+		if pre_cond[pre] == 1:  action+='        ('+ 'p' + str(pre) + ' ?v'+ str(pre) + ')' +'\n'
+		if pre_cond[pre] == -1:  action+='       (not ('+ 'p' + str(pre) + ' ?v'+ str(pre) + '))' +'\n'
 	action  += '    )' +'\n'
 	action += '    :effect(and' + '\n'
 	for eff in range(len(effect)):
@@ -39,6 +40,17 @@ def _or(self,other):
 
 def _xor(self,other):
         return [se ^ so for se,so in zip(self,other)]
+
+#A special xnor that returns -1 if both are 0
+def _xnor(self, other):
+	return [sxnor(se,so) for se,so in zip(self,other)]
+
+def sxnor(se,so):
+	if (se == 0) and (so == 0):
+		return -1
+	if (se == 1) and (so == 1):
+		return 0
+	return 1 
 
 def generate_all_actions_pddl(list_actions):
 	actions = []
@@ -122,8 +134,8 @@ def prune_actions(actions):
 		new_pre_cond = [0] * len(acts[0].pre_cond)
 		for a in acts:
 			cont += 1
-			new_pre_cond = _xor(new_pre_cond,a.pre_cond)
-		new_action = Action(_or(new_pre_cond,acts[0].effect), new_pre_cond, acts[0].effect)
+			new_pre_cond = _xnor(new_pre_cond,a.pre_cond)
+		new_action = Action(_or(map(abs, new_pre_cond),acts[0].effect), new_pre_cond, acts[0].effect)
 		actions_set.add(new_action)
 	print len(effect_dict.keys())
 	print len(actions_set)
