@@ -266,11 +266,17 @@ def test_plan(plan_trace=[]):
 	print exec_action(transitions[0][0], eff) == transitions[0][1]
 	print transitions[0][1]
 
-def cvt_ttotran_FD():
+def cvt_ttotran_FD(path='sas_plan'):
+	raw_trace = open(path, 'r')
+	trace = []
+	for line in raw_trace:
+		if ';' in line:
+			break
+		trace.append(line.split()[0].replace('(', '').replace(')', ''))
 	init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
-	print convert_traces_to_transitions(init, ['a340', 'a335', 'a368', 'a566', 'a368'])
-
+	transitions = convert_traces_to_transitions(init, ['a340', 'a335', 'a368'])
+	return transitions
 
 #create_domain()
 #print read_pddl_actions()[-1], read_pddl_actions()[-1].name
-cvt_ttotran_FD()
+print cvt_ttotran_FD()
