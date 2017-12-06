@@ -4,6 +4,7 @@ class Action:
         self.parameters = parameters
         self.pre_cond = pre_cond
         self.effect = effect
+        self.name = ''
 
     def __hash__ (self):
         return hash(str(self.pre_cond) + str(self.effect))

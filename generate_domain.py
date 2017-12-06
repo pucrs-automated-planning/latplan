@@ -1,7 +1,7 @@
 from action import *
+import ast
 #Latent layer size
 N = 36
-
 
 
 #============ LOGIC OPERATORS ==============
@@ -23,6 +23,13 @@ def sxnor(se,so):
 	if (se == -1) and (so == -1):
 		return -1
 	return 0 
+
+def _act(se,so):
+	if so != -1: return se | so
+	else: return 0
+
+def exec_action(state,eff):
+	return [_act(se,so) for se,so in zip(state,eff)]
 
 #===========================================
 #============ ACTION MANAGEMENT ============
@@ -126,6 +133,26 @@ def read_csv_actions(path):
 		actions.append((s1,s2))
 	return actions
 
+def export_actions(actions,path='pddl_actions.csv'):
+	data = open(path, 'wb')
+	counter = 1
+	for a in actions:
+		rep = 'a'+ str(counter) + '@' + str(a.pre_cond) + '@' + str(a.effect) + '\n'
+		data.write(rep)
+		counter += 1
+
+def read_pddl_actions(path='pddl_actions.csv'):
+	data = open(path, 'r')
+	list_actions = []
+	for d in data:
+		split = d.split("@")
+		pred = ast.literal_eval(split[1])
+		eff = ast.literal_eval(split[2].split('\n')[0])
+		a = Action([], pred,eff)
+		a.name = split[0]
+		list_actions.append(a)
+	return list_actions
+
 #===========================================
 #========= PRUNING AND EXECUTION ===========
 
@@ -174,7 +201,8 @@ def check_action(actions, state_1, state_2):
 	print len(action_list)
 	for a in action_list:
 		if a.effect == eff:
-			print 'Found', a.effect
+			#print 'Found', a.effect
+			return a
 
 #===========================================
 #============ MODULES AND MAIN =============
@@ -186,22 +214,63 @@ def create_domain():
 	pruned = prune_actions(actions)
 	pdll_actions = generate_all_actions_pddl(pruned)
 	export_pddl(pdll_actions, 'new_domain.pddl')
+	export_actions(pruned)
 
 
+def generate_DFS_problem(actions, state, steps=5):
+	action_list = []
+	current_state = state
+	for x in range(steps):	
+		for a in actions:
+			if check_match(current_state, a.pre_cond):
+				action_list.append(a.name)
+				current_state = exec_action(current_state, a.effect)
+				break
+	return current_state, action_list
 
-def create_problem():
-	transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv')
-	actions = generate_all_actions(transitions)
-	print len(actions)
-	pruned = prune_actions(actions)
-	check_action(pruned,transitions[0][0], transitions[0][1])
-	print transitions[0][0]
-	print _xnor(transitions[0][0], transitions[0][1])
-	problem = generate_problem(transitions[0][0], transitions[0][1])
-	#0 1 1 1 0 0 1 0 1 0 1 0 0 0 1 1 0 1 1 0 0 1 1 0 1 1 0 1 0 1 0 0 1 1 1 1 1 1 1 0 0 1 1 0 1 0 1 0 1 0 1 1 0 1 1 0 0 1 1 0 1 1 0 1 0 1 0 0 1 1 1 1
-	print len(transitions[0][0]), len(transitions[0][1])
+def create_problem(init, goal, path='new_problem.pddl'):
+	problem = generate_problem(init, goal)
+	data = open(path, 'wb')
+	data.write(problem)
+
+
+def create_problem_DFS():
+	init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
+	actions =  read_pddl_actions()
+	goal, a_list = generate_DFS_problem(actions,init)
+	problem = generate_problem(init, goal)
 	data = open('new_problem.pddl', 'wb')
 	data.write(problem)
+	#print a_list
+
+def convert_traces_to_transitions(init,trace):
+	actions = read_pddl_actions()
+	current_state = init
+	transitions = [init]
+	for t in trace:
+		for a in actions:
+			if a.name == t:
+				current_state = exec_action(current_state, a.effect)
+				break;
+		transitions.append(current_state)
+	return transitions
+
+def test_plan(plan_trace=[]):
+	transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/actions.csv')
+	actions = read_pddl_actions()
 	p, pre, eff = generate_action(transitions[0][0], transitions[0][1])
-	print eff
-create_problem()
+	for trace in plan_trace:
+		pass
+
+	print check_action(actions, transitions[0][0], transitions[0][1]).name
+	print exec_action(transitions[0][0], eff) == transitions[0][1]
+	print transitions[0][1]
+
+def cvt_ttotran_FD():
+	init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
+	print convert_traces_to_transitions(init, ['a340', 'a335', 'a368', 'a566', 'a368'])
+
+
+#create_domain()
+#print read_pddl_actions()[-1], read_pddl_actions()[-1].name
+cvt_ttotran_FD()
