@@ -194,11 +194,11 @@ def check_match(act, pre_cond):
 def check_action(actions, state_1, state_2):
 	action_list = []
 	p, pre, eff = generate_action(state_1, state_2)
-	print pre
+	#print pre
 	for a in actions:
 		if check_match(state_1, a.pre_cond):
 			action_list.append(a)
-	print len(action_list)
+	#print len(action_list)
 	for a in action_list:
 		if a.effect == eff:
 			#print 'Found', a.effect
@@ -265,7 +265,7 @@ def test_plan(plan_trace=[]):
 	print check_action(actions, transitions[0][0], transitions[0][1]).name
 	print exec_action(transitions[0][0], eff) == transitions[0][1]
 	print transitions[0][1]
-
+#Converts traces to transicitions using FD sas_plan
 def cvt_ttotran_FD(path='sas_plan'):
 	raw_trace = open(path, 'r')
 	trace = []
@@ -274,9 +274,20 @@ def cvt_ttotran_FD(path='sas_plan'):
 			break
 		trace.append(line.split()[0].replace('(', '').replace(')', ''))
 	init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
-	transitions = convert_traces_to_transitions(init, ['a340', 'a335', 'a368'])
+	transitions = convert_traces_to_transitions(init, trace)
 	return transitions
+
+def cvt_trantotrace(transitions):
+	tuples = []
+	for x in range(len(transitions)-1):
+		tuples.append((transitions[x], transitions[x + 1]))
+	actions = read_pddl_actions()	
+	list_actions = []
+	for t in tuples:
+		a = check_action(actions, t[0], t[1])
+		list_actions.append(a.name)
+	return list_actions
 
 #create_domain()
 #print read_pddl_actions()[-1], read_pddl_actions()[-1].name
-print cvt_ttotran_FD()
+print cvt_trantotrace(cvt_ttotran_FD())
