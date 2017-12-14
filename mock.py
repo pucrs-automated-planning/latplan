@@ -33,7 +33,7 @@ image_diff = mae
 OPEN   = 0
 CLOSED = 1
 
-def main(network_dir, problem_dir, searcher):
+def main(network_dir, problem_dir):
     global sae, oae, ad, ad2, sd, sd2, sd3, cae, combined_discriminator, available_actions
     
     p = latplan.util.puzzle_module(network_dir)
@@ -96,4 +96,5 @@ def test():
     # ./trivial-planner.py samples/puzzle_mnist33_fc/ trivial-planner-instances/latplan.puzzles.puzzle_mnist/0-0/
     main("samples/puzzle_mnist_3_3_36_20000_conv/",
          "problem-instances/vanilla/latplan.puzzles.puzzle_mnist/007-000-000")
-    
+
+test()    
