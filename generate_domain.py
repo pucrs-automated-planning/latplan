@@ -1,5 +1,8 @@
 from action import *
 from subprocess import call
+from os import listdir
+from os.path import isfile, join
+import os, errno
 import ast
 
 #Latent layer size
@@ -344,7 +347,6 @@ def plan_fd(path_domain, path_problem):
 
 
 def setup_complete_test(path):
-    import os, errno
     try:
         os.makedirs(path)
     except OSError as e:
@@ -360,5 +362,32 @@ def setup_complete_test(path):
     export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()), path + '/obs.dat')
     export_hypothesis(list_hyp, path=path + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path+ '/' +'real_hyp.dat')
-setup_complete_test('mnist01')
+
+def set_up_pgr(path_domain, path_dir, path_output='out1'):
+    onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
+    init = encode(misc.imread(path_dir+'/init.png'))
+    goal = encode(misc.imread(path_dir+'/goal.png'))
+    candidate_goals = []
+    real_goal = encode(misc.imread(path_dir+'/r.png'))
+    for f in onlyfiles:
+        if 'c' in f:
+            candidate_goals.append(encode(misc.imread(path_dir+'/'+f)))
+
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    create_problem(init, goal, path_output + '/problem.pddl')
+    plan_fd(path_domain, path_output+'/problem.pddl')
+    export_problem_pgr(init, path_output+ '/')
+    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()), path_output + '/obs.dat')
+    export_hypothesis(list_hyp, path=path_output + '/' + 'hyps.dat')
+    export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
+    print(onlyfiles)
+
+
+#setup_complete_test('mnist01')
 #plan_fd('new_domain.pddl','new_problem.pddl')
+set_up_pgr('new_domain.pddl', '.')
