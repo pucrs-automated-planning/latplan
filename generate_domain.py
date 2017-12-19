@@ -4,6 +4,7 @@ from os import listdir
 from os.path import isfile, join
 import os, errno
 import ast
+import random
 
 #Latent layer size
 N = 36
@@ -252,7 +253,7 @@ def export_hypothesis(list_goals, path='hyps.dat'):
 
 
 #===========================================
-#============ MODULES AND MAIN =============
+#=========== HELPERS FOR MODULES ===========
 
 def create_domain(actions, path):
     transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv')
@@ -345,6 +346,19 @@ def plan_fd(path_domain, path_problem):
     #print FD_PATH+'fast_downward.py'
     call([FD_PATH+'fast-downward.py', path_domain, path_problem, '--search' ,'astar(lmcut())'])
 
+def percentage_slice(_list, per):
+    new_size = int (len(_list) * per)
+    copy = list(_list)
+    while len(copy) > new_size:
+        index = random.randrange(len(copy))
+        copy.pop(index)
+    return copy
+
+
+
+
+#===========================================
+#============ MODULES AND MAIN =============
 
 def setup_complete_test(path):
     try:
@@ -385,9 +399,9 @@ def set_up_pgr(path_domain, path_dir, path_output='out1'):
     export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()), path_output + '/obs.dat')
     export_hypothesis(list_hyp, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
-    print(onlyfiles)
 
 
 #setup_complete_test('mnist01')
 #plan_fd('new_domain.pddl','new_problem.pddl')
-set_up_pgr('new_domain.pddl', '.')
+#set_up_pgr('new_domain.pddl', '.')
+print percentage_slice([0,1,2,3,4,5,6,7,8,9], 0.7)
