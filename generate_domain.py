@@ -1,8 +1,10 @@
 from action import *
+from subprocess import call
 import ast
+
 #Latent layer size
 N = 36
-
+FD_PATH = '../../fast_downward/'
 
 #============ LOGIC OPERATORS ==============
 def _or(self,other):
@@ -106,7 +108,7 @@ def export_pddl(actions, path):
 def generate_problem(init_state, goal_state):
     txt = '(define (problem pb1)\n'
     txt += '    (:domain generated-domain)\n'
-    txt += '    (:requirements :strips :negative-preconditions)\n'
+#    txt += '    (:requirements :strips :negative-preconditions)\n'
     txt += '    (:init\n'
     for pre in range(len(init_state)):
         if init_state[pre]:  txt+='       ('+ 'p' + str(pre) + ')' +'\n'
@@ -120,6 +122,23 @@ def generate_problem(init_state, goal_state):
     txt += '      )\n'
     txt += '    )\n)'
     return txt
+
+def export_problem_pgr(init_state,path=''):
+    txt = '(define (problem pb1)\n'
+    txt += '    (:domain generated-domain)\n'
+#    txt += '    (:requirements :strips :negative-preconditions)\n'
+    txt += '    (:init\n'
+    for pre in range(len(init_state)):
+        if init_state[pre]:  txt+='       ('+ 'p' + str(pre) + ')' +'\n'
+        else: txt+='       (not ('+ 'p' + str(pre) + '))' +'\n'
+    txt += '    )\n'
+    txt += '    (:goal\n'
+    txt += '      (and\n'
+    txt += '            <<HYPOTHESIS>>'
+    txt += '      )\n'
+    txt += '    )\n)'
+    data = open(path+'template.pddl', 'wb')
+    data.write(txt)
 
 
 def read_csv_actions(path):
@@ -204,16 +223,41 @@ def check_action(actions, state_1, state_2):
             #print 'Found', a.effect
             return a
 
+
+#===========================================
+#============== PGR EXPORTS ================
+
+def export_trace_obs(trace, path='obs.dat'):
+    data = open(path, 'wb')
+    for action in trace:
+        data.write(action + '\n')
+
+def export_hypothesis(list_goals, path='hyps.dat'):
+    data = open(path, 'wb')
+    first = True
+    for state in list_goals:
+        txt = ''
+        for pre in range(len(state)):
+            if not first: txt+= ','
+            if state[pre]:  txt+='('+ 'p' + str(pre) + ')'
+            else: txt+='(not ('+ 'p' + str(pre) + '))'
+            first = False
+        data.write(txt + '\n')
+        first = True
+        
+        
+
+
 #===========================================
 #============ MODULES AND MAIN =============
 
-def create_domain():
+def create_domain(actions, path):
     transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv')
     actions = generate_all_actions(transitions)
     print( len(actions))
     pruned = prune_actions(actions)
     pdll_actions = generate_all_actions_pddl(pruned)
-    export_pddl(pdll_actions, 'new_domain.pddl')
+    export_pddl(pdll_actions, path)
     export_actions(pruned)
 
 
@@ -234,12 +278,11 @@ def create_problem(init, goal, path='new_problem.pddl'):
     data.write(problem)
 
 
-def create_problem_DFS():
-    init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
-    actions =  read_pddl_actions()
+def create_problem_DFS(init, actions='pddl_actions.csv', path='problem.pddl'):
+    actions =  read_pddl_actions(actions)
     goal, a_list = generate_DFS_problem(actions,init)
     problem = generate_problem(init, goal)
-    data = open('new_problem.pddl', 'wb')
+    data = open(path, 'wb')
     data.write(problem)
     #print a_list
 
@@ -277,11 +320,11 @@ def cvt_ttotran_FD(path='sas_plan'):
     transitions = convert_traces_to_transitions(init, trace)
     return transitions
 
-def cvt_trantotrace(transitions):
+def cvt_trantotrace(transitions,actions='pddl_actions.csv'):
     tuples = []
     for x in range(len(transitions)-1):
         tuples.append((transitions[x], transitions[x + 1]))
-    actions = read_pddl_actions()    
+    actions = read_pddl_actions(actions)    
     list_actions = []
     for t in tuples:
         a = check_action(actions, t[0], t[1])
@@ -290,4 +333,32 @@ def cvt_trantotrace(transitions):
 
 #create_domain()
 #print read_pddl_actions()[-1], read_pddl_actions()[-1].name
-print( cvt_trantotrace(cvt_ttotran_FD()))
+#export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()))
+#list_hyp = [[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1], [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1]]
+#export_hypothesis(list_hyp)
+#export_hypothesis([goal], path='real_hyp.dat')
+
+def plan_fd(path_domain, path_problem):
+    #print FD_PATH+'fast_downward.py'
+    call([FD_PATH+'fast-downward.py', path_domain, path_problem, '--search' ,'astar(lmcut())'])
+
+
+def setup_complete_test(path):
+    import os, errno
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+    create_domain('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv', path+'/domain.pddl')
+    init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
+    list_hyp = [[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1], [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1],[0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]]
+    goal = [0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
+    create_problem(init, goal, path + '/problem.pddl')
+    plan_fd(path+'/domain.pddl', path+'/problem.pddl')
+    export_problem_pgr(init, path+ '/')
+    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()), path + '/obs.dat')
+    export_hypothesis(list_hyp, path=path + '/' + 'hyps.dat')
+    export_hypothesis([goal], path=path+ '/' +'real_hyp.dat')
+setup_complete_test('mnist01')
+#plan_fd('new_domain.pddl','new_problem.pddl')
