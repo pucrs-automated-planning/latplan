@@ -9,15 +9,20 @@ from scipy import misc
 from latplan.util import get_ae_type
 from latplan.model import default_networks
 from latplan.puzzles.util import preprocess, normalize
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth=True
+sess = tf.Session(config=config)
 
+GPU_NUMBER = '1'
 
 class EncoderDecoder():
     """
-        Encoder/Decoder class to turn images into a latent representations and
+        Encoder/Decoder class to turn images into latent representations and
         reconstruct images from latent representations.
     """
     def __init__(self, network_folder):
-        
+        # Initialize autoencoder using the network_folder.
         self.network_folder = network_folder
         self.sae = default_networks[get_ae_type(self.network_folder)](self.network_folder).load(allow_failure=True)
 
@@ -29,7 +34,8 @@ class EncoderDecoder():
 
     @staticmethod
     def _save_img(image, output_path):
-
+        # Save an image to the destination path.
+        # TODO: Make it work, please.
         w = 4
         l = 4
         h = int(math.ceil(l/w))
@@ -49,60 +55,34 @@ class EncoderDecoder():
 
     @staticmethod
     def _get_output_path(image_path, mode):
-
+        # From a given path, create an output_path with the correct mode (encode, decode).
         image_name = os.path.basename(image_path)
         path_to_img = os.path.dirname(image_path)
         return  os.path.join(path_to_img, mode + '_' + image_name)
 
-    def encode(self, image_path, save=False):
+    def encode(self, image_path, open_img=False):
+        # Turn an image to a latent representation.
+        # Set open_img True if the image_path is a path to an image and needs to be opened.
+        if open_img:
+            image_path = os.path.realpath(image_path)
+            image = self._open_image(image_path)
 
-        image_path = os.path.realpath(image_path)
+        return self.sae.encode_binary(np.expand_dims(image,0))[0].round().astype(int)    
 
-        image = self._open_image(image_path)
-        encode = self.sae.encode_binary(np.expand_dims(image,0))[0].round().astype(int)    
+    def decode(self, encoded_img, open_img=False):
+        # Turn a latent representation to an image.
+        # Set open_img True if the image_path is a path to an image and needs to be opened.
+        if open_img:
+            encoded_img = os.path.realpath(encoded_img)
+            encoded_img = self._open_image(encoded_img)
 
-        if save:
-            output_path = self._get_output_path(image_path, 'encode')
-            self._save_img(encode, output_path)
-
-        return encode
-
-    def decode(self, image_path, save=False):
-
-        image_path = os.path.realpath(image_path)
-
-        image = self._open_image(image_path)
-        decode = self.sae.decode_binary(np.array([image]))
-
-        if save:
-            output_path = self._get_output_path(image_path, 'decode')
-            self._save_img(decode, output_path)
-
-        return decode
-
-    def convert_folder(self, folder_path, mode='encode'):
-
-        # Get file in folder.
-        images = os.listdir(folder_path)
-
-        for image in images:
-
-            image_path = os.path.join(folder_path, image)
-
-            try:
-                image = self._open_image(image_path)
-            except:
-                print("Problem when opening 'image': %s" % image_path)
-                continue
-
-            if mode == 'encode':
-                self.encode(image_path, save=True)
-            else:
-                self.decode(image_path, save=True)
+        return self.sae.decode_binary(np.array([encoded_img]))
 
 
 if __name__ == '__main__':
 
+    os.environ['CUDA_VISIBLE_DEVICES'] = GPU_NUMBER
+    
     parser = argparse.ArgumentParser()
 
     parser.add_argument('network_foder', metavar='net_foder', 
@@ -113,10 +93,9 @@ if __name__ == '__main__':
 
     image_path = "/usr/share/datasets/8_puzzle_mnist/test_folder/012345678.jpg"
 
-    dec = enc_dec.encode(image_path, save=True)
+    dec = enc_dec.encode(image_path, open_img=True)
     print(dec)
-    # enc = enc_dec.decode()    
-
+    
     # network_dir = "samples/puzzle_mnist_3_3_36_20000_conv/"
     
 
