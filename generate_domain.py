@@ -377,12 +377,12 @@ def setup_complete_test(path):
 def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1'):
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
-    init = enc_dec.encode(path_dir+'/init.png')
-    goal = enc_dec.encode(path_dir+'/goal.png')
+    init = enc_dec.encode(path_dir+'/init.png', True)
+    goal = enc_dec.encode(path_dir+'/goal.png', True)
     candidate_goals = []
     for f in onlyfiles:
         if 'c' in f:
-            candidate_goals.append(enc_dec.encode(path_dir+'/'+f))
+            candidate_goals.append(enc_dec.encode(path_dir+'/'+f, True))
 
     try:
         os.makedirs(path_output)
