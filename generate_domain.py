@@ -5,7 +5,7 @@ from os.path import isfile, join
 import os, errno
 import ast
 import random
-
+from encode_decode import EncoderDecoder
 #Latent layer size
 N = 36
 FD_PATH = '../../fast_downward/'
@@ -104,7 +104,7 @@ def export_pddl(actions, path):
     for action in actions:
       txt += action
     txt += ')'
-    data = open(path, 'wb')
+    data = open(path, 'w')
     data.write(txt)
 
 
@@ -141,7 +141,7 @@ def export_problem_pgr(init_state,path=''):
     txt += '            <<HYPOTHESIS>>'
     txt += '      )\n'
     txt += '    )\n)'
-    data = open(path+'template.pddl', 'wb')
+    data = open(path+'template.pddl', 'w')
     data.write(txt)
 
 
@@ -157,7 +157,7 @@ def read_csv_actions(path):
     return actions
 
 def export_actions(actions,path='pddl_actions.csv'):
-    data = open(path, 'wb')
+    data = open(path, 'w')
     counter = 1
     for a in actions:
         rep = 'a'+ str(counter) + '@' + str(a.pre_cond) + '@' + str(a.effect) + '\n'
@@ -221,23 +221,21 @@ def check_action(actions, state_1, state_2):
     for a in actions:
         if check_match(state_1, a.pre_cond):
             action_list.append(a)
-    #print len(action_list)
     for a in action_list:
         if a.effect == eff:
             #print 'Found', a.effect
             return a
 
-
 #===========================================
 #============== PGR EXPORTS ================
 
 def export_trace_obs(trace, path='obs.dat'):
-    data = open(path, 'wb')
+    data = open(path, 'w')
     for action in trace:
         data.write(action + '\n')
 
 def export_hypothesis(list_goals, path='hyps.dat'):
-    data = open(path, 'wb')
+    data = open(path, 'w')
     first = True
     for state in list_goals:
         txt = ''
@@ -278,7 +276,7 @@ def generate_DFS_problem(actions, state, steps=5):
 
 def create_problem(init, goal, path='new_problem.pddl'):
     problem = generate_problem(init, goal)
-    data = open(path, 'wb')
+    data = open(path, 'w')
     data.write(problem)
 
 
@@ -286,7 +284,7 @@ def create_problem_DFS(init, actions='pddl_actions.csv', path='problem.pddl'):
     actions =  read_pddl_actions(actions)
     goal, a_list = generate_DFS_problem(actions,init)
     problem = generate_problem(init, goal)
-    data = open(path, 'wb')
+    data = open(path, 'w')
     data.write(problem)
     #print a_list
 
@@ -313,14 +311,13 @@ def test_plan(plan_trace=[]):
     print( exec_action(transitions[0][0], eff) == transitions[0][1])
     print( transitions[0][1])
 #Converts traces to transicitions using FD sas_plan
-def cvt_ttotran_FD(path='sas_plan'):
+def cvt_ttotran_FD(init, path='sas_plan'):
     raw_trace = open(path, 'r')
     trace = []
     for line in raw_trace:
         if ';' in line:
             break
         trace.append(line.split()[0].replace('(', '').replace(')', ''))
-    init = [0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1]
     transitions = convert_traces_to_transitions(init, trace)
     return transitions
 
@@ -377,18 +374,18 @@ def setup_complete_test(path):
     export_hypothesis(list_hyp, path=path + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path+ '/' +'real_hyp.dat')
 
-def set_up_pgr(path_domain, path_dir, path_output='out1'):
+def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1'):
+    enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
-    init = encode(misc.imread(path_dir+'/init.png'))
-    goal = encode(misc.imread(path_dir+'/goal.png'))
+    init = enc_dec.encode(path_dir+'/init.png')
+    goal = enc_dec.encode(path_dir+'/goal.png')
     candidate_goals = []
-    real_goal = encode(misc.imread(path_dir+'/r.png'))
     for f in onlyfiles:
         if 'c' in f:
-            candidate_goals.append(encode(misc.imread(path_dir+'/'+f)))
+            candidate_goals.append(enc_dec.encode(path_dir+'/'+f))
 
     try:
-        os.makedirs(path)
+        os.makedirs(path_output)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -396,12 +393,11 @@ def set_up_pgr(path_domain, path_dir, path_output='out1'):
     create_problem(init, goal, path_output + '/problem.pddl')
     plan_fd(path_domain, path_output+'/problem.pddl')
     export_problem_pgr(init, path_output+ '/')
-    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()), path_output + '/obs.dat')
-    export_hypothesis(list_hyp, path=path_output + '/' + 'hyps.dat')
+    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD(init)), path_output + '/obs.dat')
+    export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
 
 
 #setup_complete_test('mnist01')
 #plan_fd('new_domain.pddl','new_problem.pddl')
-#set_up_pgr('new_domain.pddl', '.')
-print percentage_slice([0,1,2,3,4,5,6,7,8,9], 0.7)
+set_up_pgr('samples/puzzle_mnist_3_3_36_20000_conv/','new_domain.pddl', 'pb01', 'pb01_out')
