@@ -6,6 +6,8 @@ import os, errno
 import ast
 import random
 from encode_decode import EncoderDecoder
+from latplan.util.plot import *
+import numpy as np
 #Latent layer size
 N = 36
 FD_PATH = '../../fast_downward/'
@@ -351,6 +353,33 @@ def percentage_slice(_list, per):
         copy.pop(index)
     return copy
 
+def save_plan_img(transitions, path, sae):
+    list_images = []
+    for t in transitions:
+        list_images.append(sae.decode(t, False))
+    plot_grid_m(np.array(list_images),10,path)
+
+
+def plot_grid_m(images,w=10,path="plan.png",verbose=False):
+    import matplotlib.pyplot as plt
+    l = 0
+    #images = fix_images(images)
+    l = len(images)
+    h = int(math.ceil(l/w))
+    plt.figure(figsize=(w*1.5, h*1.5))
+    for i,image in enumerate(images):
+        ax = plt.subplot(h,w,i+1)
+        try:
+            plt.imshow(image.reshape(42,42),interpolation='nearest',cmap='gray')
+        except TypeError:
+            TypeError("Invalid dimensions for image data: image={}".format(np.array(image).shape))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+    print(path) if verbose else None
+    #plt.show()
+    plt.tight_layout()
+    plt.savefig(path)
+    plt.close()
 
 
 
@@ -392,11 +421,11 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1'):
 
     create_problem(init, goal, path_output + '/problem.pddl')
     plan_fd(path_domain, path_output+'/problem.pddl')
+    save_plan_img(cvt_ttotran_FD(init.tolist()), path_output + '/plan.png', enc_dec)
     export_problem_pgr(init, path_output+ '/')
     export_trace_obs(cvt_trantotrace(cvt_ttotran_FD(init)), path_output + '/obs.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
-
 
 #setup_complete_test('mnist01')
 #plan_fd('new_domain.pddl','new_problem.pddl')
