@@ -153,8 +153,10 @@ def read_csv_actions(path):
     for d in data:
         d = d.split()
         line = [int(i) for i in d]
-        s1 = line[:len(line)/2]
-        s2 = line[len(line)/2:]
+        s1 = line[:int(len(line)/2)]
+        s2 = line[int(len(line)/2):]
+        if len(s1) != len(s2):
+            print('FATAL ERROR')
         actions.append((s1,s2))
     return actions
 
@@ -167,6 +169,7 @@ def export_actions(actions,path='pddl_actions.csv'):
         counter += 1
 
 def read_pddl_actions(path='pddl_actions.csv'):
+    print('Reading actions_csv ', path)
     data = open(path, 'r')
     list_actions = []
     for d in data:
@@ -255,14 +258,15 @@ def export_hypothesis(list_goals, path='hyps.dat'):
 #===========================================
 #=========== HELPERS FOR MODULES ===========
 
-def create_domain(actions, path):
+def create_domain(actions, path, exp_actions='pddl_actions.csv'):
     transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv')
     actions = generate_all_actions(transitions)
-    print( len(actions))
+    #print( len(actions))
     pruned = prune_actions(actions)
-    pdll_actions = generate_all_actions_pddl(pruned)
-    export_pddl(pdll_actions, path)
-    export_actions(pruned)
+    pddl_actions = generate_all_actions_pddl(pruned)
+    export_pddl(pddl_actions, path)
+    export_actions(pruned,exp_actions)
+    return len(transitions), len(actions),len(pruned)
 
 
 def generate_DFS_problem(actions, state, steps=5):
@@ -290,8 +294,8 @@ def create_problem_DFS(init, actions='pddl_actions.csv', path='problem.pddl'):
     data.write(problem)
     #print a_list
 
-def convert_traces_to_transitions(init,trace):
-    actions = read_pddl_actions()
+def convert_traces_to_transitions(init,trace,pddl_actions='pddl_actions.csv'):
+    actions = read_pddl_actions(pddl_actions)
     current_state = init
     transitions = [init]
     for t in trace:
@@ -313,14 +317,14 @@ def test_plan(plan_trace=[]):
     print( exec_action(transitions[0][0], eff) == transitions[0][1])
     print( transitions[0][1])
 #Converts traces to transicitions using FD sas_plan
-def cvt_ttotran_FD(init, path='sas_plan'):
+def cvt_ttotran_FD(init,pddl_actions='pddl_actions.csv',path='sas_plan'):
     raw_trace = open(path, 'r')
     trace = []
     for line in raw_trace:
         if ';' in line:
             break
         trace.append(line.split()[0].replace('(', '').replace(')', ''))
-    transitions = convert_traces_to_transitions(init, trace)
+    transitions = convert_traces_to_transitions(init, trace, pddl_actions)
     return transitions
 
 def cvt_trantotrace(transitions,actions='pddl_actions.csv'):
@@ -399,11 +403,22 @@ def setup_complete_test(path):
     create_problem(init, goal, path + '/problem.pddl')
     plan_fd(path+'/domain.pddl', path+'/problem.pddl')
     export_problem_pgr(init, path+ '/')
-    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD()), path + '/obs.dat')
+    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD(init)), path + '/obs.dat')
     export_hypothesis(list_hyp, path=path + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path+ '/' +'real_hyp.dat')
 
-def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1'):
+def module_create_domain(actions, domain, output_dir):
+    output_path = output_dir+domain+'_domain.pddl'
+    exp_actions = output_dir+domain+'_actions.csv'
+    print('Creating domain from:', actions, ' to: ', output_path)
+    print('PDDL_CSV:', exp_actions)
+    transitions_len, actions_len, pruned_len = create_domain(actions, output_path, exp_actions)
+    print('Total transitions: ', transitions_len)
+    print('Distinct transitions: ', actions_len)
+    print('Actions generated: ', pruned_len)
+
+
+def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv'):
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
     init = enc_dec.encode(path_dir+'/init.png', True)
@@ -421,12 +436,24 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1'):
 
     create_problem(init, goal, path_output + '/problem.pddl')
     plan_fd(path_domain, path_output+'/problem.pddl')
-    save_plan_img(cvt_ttotran_FD(init.tolist()), path_output + '/plan.png', enc_dec)
+    save_plan_img(cvt_ttotran_FD(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec)
     export_problem_pgr(init, path_output+ '/')
-    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD(init)), path_output + '/obs.dat')
+    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD(init,pddl_actions),pddl_actions), path_output + '/obs.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
 
 #setup_complete_test('mnist01')
 #plan_fd('new_domain.pddl','new_problem.pddl')
-set_up_pgr('samples/puzzle_mnist_3_3_36_20000_conv/','new_domain.pddl', 'pb01', 'pb01_out')
+
+
+if __name__ == '__main__':
+    import sys
+    if sys.argv[1] == 'domain':
+        module_create_domain(*sys.argv[2:])
+    elif sys.argv[1] == 'recon':
+        set_up_pgr(*sys.argv[2:])       
+    #if len(sys.argv) < 3:
+     #   sys.exit("{} [networkdir] [problemdir]".format(sys.argv[0]))
+    #main(*sys.argv[1:])
+    sys.exit()
+#set_up_pgr('samples/puzzle_mnist_3_3_36_20000_conv/','mnist01/domain.pddl', 'pb01', 'pb01_out')
