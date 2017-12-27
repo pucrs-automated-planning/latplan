@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from action import *
 from subprocess import call
 from os import listdir
@@ -155,8 +157,6 @@ def read_csv_actions(path):
         line = [int(i) for i in d]
         s1 = line[:int(len(line)/2)]
         s2 = line[int(len(line)/2):]
-        if len(s1) != len(s2):
-            print('FATAL ERROR')
         actions.append((s1,s2))
     return actions
 
@@ -169,7 +169,6 @@ def export_actions(actions,path='pddl_actions.csv'):
         counter += 1
 
 def read_pddl_actions(path='pddl_actions.csv'):
-    print('Reading actions_csv ', path)
     data = open(path, 'r')
     list_actions = []
     for d in data:
@@ -203,9 +202,6 @@ def prune_actions(actions):
             new_pre_cond = _xnor(new_pre_cond,a.pre_cond)
         new_action = Action(_or(map(abs, new_pre_cond),acts[0].effect), new_pre_cond, acts[0].effect)
         actions_set.add(new_action)
-    print( len(effect_dict.keys()))
-    print( len(actions_set))
-    print( 'xors' , cont)
     return actions_set
 
 def check_match(act, pre_cond):
@@ -258,8 +254,8 @@ def export_hypothesis(list_goals, path='hyps.dat'):
 #===========================================
 #=========== HELPERS FOR MODULES ===========
 
-def create_domain(actions, path, exp_actions='pddl_actions.csv'):
-    transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/all_actions.csv')
+def create_domain(actions_path, path, exp_actions='pddl_actions.csv'):
+    transitions = read_csv_actions(actions_path)
     actions = generate_all_actions(transitions)
     #print( len(actions))
     pruned = prune_actions(actions)
@@ -306,16 +302,6 @@ def convert_traces_to_transitions(init,trace,pddl_actions='pddl_actions.csv'):
         transitions.append(current_state)
     return transitions
 
-def test_plan(plan_trace=[]):
-    transitions = read_csv_actions('samples/puzzle_mnist_3_3_36_20000_conv/actions.csv')
-    actions = read_pddl_actions()
-    p, pre, eff = generate_action(transitions[0][0], transitions[0][1])
-    for trace in plan_trace:
-        pass
-
-    print( check_action(actions, transitions[0][0], transitions[0][1]).name)
-    print( exec_action(transitions[0][0], eff) == transitions[0][1])
-    print( transitions[0][1])
 #Converts traces to transicitions using FD sas_plan
 def cvt_ttotran_FD(init,pddl_actions='pddl_actions.csv',path='sas_plan'):
     raw_trace = open(path, 'r')
@@ -408,14 +394,19 @@ def setup_complete_test(path):
     export_hypothesis([goal], path=path+ '/' +'real_hyp.dat')
 
 def module_create_domain(actions, domain, output_dir):
+    import timeit
     output_path = output_dir+domain+'_domain.pddl'
     exp_actions = output_dir+domain+'_actions.csv'
-    print('Creating domain from:', actions, ' to: ', output_path)
-    print('PDDL_CSV:', exp_actions)
+    data = open(output_dir+domain+'_logs.txt', 'w')
+    data.write('Creating domain from: '+ actions + ' to: '+ output_path + '\n')
+    data.write('PDDL_CSV:' + exp_actions + '\n')
+    start_time = timeit.default_timer()
     transitions_len, actions_len, pruned_len = create_domain(actions, output_path, exp_actions)
-    print('Total transitions: ', transitions_len)
-    print('Distinct transitions: ', actions_len)
-    print('Actions generated: ', pruned_len)
+    elapsed = timeit.default_timer() - start_time
+    data.write('Total transitions: '+ str(transitions_len)+ '\n')
+    data.write('Distinct transitions: '+ str(actions_len)+ '\n')
+    data.write('Actions generated: '+ str(pruned_len)+ '\n')
+    data.write('Time elapsed: '+ str(elapsed)+ '\n')
 
 
 def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv'):

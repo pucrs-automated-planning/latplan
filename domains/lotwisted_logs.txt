@@ -1,0 +1,6 @@
+Creating domain from: samples/lightsout_twisted_4_36_20000_conv/all_actions.csv to: domains/lotwisted_domain.pddl
+PDDL_CSV:domains/lotwisted_actions.csv
+Total transitions: 1048576
+Distinct transitions: 1048576
+Actions generated: 12669
+Time elapsed: 68.07023829780519

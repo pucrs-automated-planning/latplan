@@ -1,0 +1,6 @@
+Creating domain from: samples/puzzle_mandrill_3_3_36_20000_conv/all_actions.csv to: domains/mandrill_domain.pddl
+PDDL_CSV:domains/mandrill_actions.csv
+Total transitions: 967680
+Distinct transitions: 967680
+Actions generated: 495
+Time elapsed: 60.52598479948938
