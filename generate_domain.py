@@ -337,6 +337,8 @@ def plan_fd(path_domain, path_problem):
 
 def percentage_slice(_list, per):
     new_size = int (len(_list) * per)
+    if new_size == 0: 
+        new_size = 1
     copy = list(_list)
     while len(copy) > new_size:
         index = random.randrange(len(copy))
@@ -409,7 +411,7 @@ def module_create_domain(actions, domain, output_dir):
     data.write('Time elapsed: '+ str(elapsed)+ '\n')
 
 
-def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv'):
+def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv', obs=100):
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
     init = enc_dec.encode(path_dir+'/init.png', True)
@@ -429,7 +431,9 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
     plan_fd(path_domain, path_output+'/problem.pddl')
     save_plan_img(cvt_ttotran_FD(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec)
     export_problem_pgr(init, path_output+ '/')
-    export_trace_obs(cvt_trantotrace(cvt_ttotran_FD(init,pddl_actions),pddl_actions), path_output + '/obs.dat')
+    traces = cvt_trantotrace(cvt_ttotran_FD(init,pddl_actions),pddl_actions)
+    p_traces = percentage_slice(traces, float(obs)/100.0)
+    export_trace_obs(p_traces, path_output + '/obs.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
 
