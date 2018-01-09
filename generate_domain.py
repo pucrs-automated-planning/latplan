@@ -7,12 +7,15 @@ from os.path import isfile, join
 import os, errno
 import ast
 import random
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 from encode_decode import EncoderDecoder
 from latplan.util.plot import *
 import numpy as np
 #Latent layer size
 N = 36
-FD_PATH = '../../fast_downward/'
+FD_PATH = '../fast_downward/'
 
 #============ LOGIC OPERATORS ==============
 def _or(self,other):
@@ -353,7 +356,6 @@ def save_plan_img(transitions, path, sae):
 
 
 def plot_grid_m(images,w=10,path="plan.png",verbose=False):
-    import matplotlib.pyplot as plt
     l = 0
     #images = fix_images(images)
     l = len(images)
