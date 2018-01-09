@@ -15,7 +15,9 @@ from latplan.util.plot import *
 import numpy as np
 #Latent layer size
 N = 36
-FD_PATH = '../fast_downward/'
+FD_PATH = '../../fast_downward/'
+SIZE_H = 42
+SIZE_W = 42
 
 #============ LOGIC OPERATORS ==============
 def _or(self,other):
@@ -145,7 +147,7 @@ def export_problem_pgr(init_state,path=''):
     txt += '    )\n'
     txt += '    (:goal\n'
     txt += '      (and\n'
-    txt += '            <<HYPOTHESIS>>'
+    txt += '            <HYPOTHESIS>'
     txt += '      )\n'
     txt += '    )\n)'
     data = open(path+'template.pddl', 'w')
@@ -348,14 +350,14 @@ def percentage_slice(_list, per):
         copy.pop(index)
     return copy
 
-def save_plan_img(transitions, path, sae):
+def save_plan_img(transitions, path, sae, SIZE_H, SIZE_W):
     list_images = []
     for t in transitions:
         list_images.append(sae.decode(t, False))
-    plot_grid_m(np.array(list_images),10,path)
+    plot_grid_m(np.array(list_images),10,path, SIZE_H, SIZE_W)
 
 
-def plot_grid_m(images,w=10,path="plan.png",verbose=False):
+def plot_grid_m(images,w=10,path="plan.png", SIZE_H=42, SIZE_W=42, verbose=False):
     l = 0
     #images = fix_images(images)
     l = len(images)
@@ -364,13 +366,12 @@ def plot_grid_m(images,w=10,path="plan.png",verbose=False):
     for i,image in enumerate(images):
         ax = plt.subplot(h,w,i+1)
         try:
-            plt.imshow(image.reshape(42,42),interpolation='nearest',cmap='gray')
+            plt.imshow(image.reshape(SIZE_H,SIZE_W),interpolation='nearest',cmap='gray')
         except TypeError:
             TypeError("Invalid dimensions for image data: image={}".format(np.array(image).shape))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
     print(path) if verbose else None
-    #plt.show()
     plt.tight_layout()
     plt.savefig(path)
     plt.close()
@@ -416,6 +417,10 @@ def module_create_domain(actions, domain, output_dir):
 def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv', obs=100):
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
+    img_init = enc_dec._open_image(path_dir+'/init.png')
+    SIZE_H, SIZE_W = img_init.shape
+    print(SIZE_H, SIZE_W)
+     
     init = enc_dec.encode(path_dir+'/init.png', True)
     goal = enc_dec.encode(path_dir+'/goal.png', True)
     candidate_goals = []
@@ -431,10 +436,11 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
 
     create_problem(init, goal, path_output + '/problem.pddl')
     plan_fd(path_domain, path_output+'/problem.pddl')
-    save_plan_img(cvt_ttotran_FD(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec)
+    save_plan_img(cvt_ttotran_FD(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec, SIZE_H, SIZE_W)
     export_problem_pgr(init, path_output+ '/')
     traces = cvt_trantotrace(cvt_ttotran_FD(init,pddl_actions),pddl_actions)
     p_traces = percentage_slice(traces, float(obs)/100.0)
+    call(['cp', path_domain, path_output+ '/' +'domain.pddl'])
     export_trace_obs(p_traces, path_output + '/obs.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
