@@ -418,9 +418,7 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
     img_init = enc_dec._open_image(path_dir+'/init.png')
-    SIZE_H, SIZE_W = img_init.shape
-    print(SIZE_H, SIZE_W)
-     
+    SIZE_H, SIZE_W = img_init.shape     
     init = enc_dec.encode(path_dir+'/init.png', True)
     goal = enc_dec.encode(path_dir+'/goal.png', True)
     candidate_goals = []
