@@ -137,6 +137,25 @@ def generate_problem(init_state, goal_state):
     txt += '    )\n)'
     return txt
 
+def generate_problem_no_negatives(init_state, goal_state):
+    txt = '(define (problem pb1)\n'
+    txt += '    (:domain generated-domain)\n'
+#    txt += '    (:requirements :strips :negative-preconditions)\n'
+    txt += '    (:init\n'
+    for pre in range(len(init_state)):
+        if init_state[pre]:  txt+='       ('+ 'p' + str(pre) + ')' +'\n'
+        #else: txt+='       (not ('+ 'p' + str(pre) + '))' +'\n'
+    txt += '    )\n'
+    txt += '    (:goal\n'
+    txt += '      (and\n'
+    for pre in range(len(goal_state)):
+        if goal_state[pre]:  txt+='       ('+ 'p' + str(pre) + ')' +'\n'
+        else: txt+='       (not ('+ 'p' + str(pre) + '))' +'\n'
+    txt += '      )\n'
+    txt += '    )\n)'
+    return txt
+
+
 def export_problem_pgr(init_state,path=''):
     txt = '(define (problem pb1)\n'
     txt += '    (:domain generated-domain)\n'
@@ -287,6 +306,11 @@ def create_problem(init, goal, path='new_problem.pddl'):
     data = open(path, 'w')
     data.write(problem)
 
+def create_problem_no_negatives(init, goal, path='new_problem.pddl'):
+    problem = generate_problem_no_negatives(init, goal)
+    data = open(path, 'w')
+    data.write(problem)
+
 
 def create_problem_DFS(init, actions='pddl_actions.csv', path='problem.pddl'):
     actions =  read_pddl_actions(actions)
@@ -357,7 +381,7 @@ def plan_mp(path_domain, path_problem):
     call(['ruby', MP_PATH+'MauPlanner.rb', path_domain, path_problem, '-a', 'blindc'], stdout=f)
 
 def percentage_slice(_list, per):
-    new_size = int (len(_list) * per)
+    new_size = int(math.ceil(len(_list) * per))
     if new_size == 0: 
         new_size = 1
     copy = list(_list)
@@ -430,7 +454,7 @@ def module_create_domain(actions, domain, output_dir):
     data.write('Time elapsed: '+ str(elapsed)+ '\n')
 
 
-def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv', obs=100):
+def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv', obs=100, plan=False):
     print("Working on:", path_domain, path_dir)
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
@@ -449,10 +473,14 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
         if e.errno != errno.EEXIST:
             raise
 
-    create_problem(init, goal, path_output + '/problem.pddl')
-    print("Planning: ", path_domain, path_dir)
-    plan_mp(path_domain, path_output+'/problem.pddl')
-    print("Done")
+    create_problem(init, goal, path_output + '/problem_neg.pddl')
+    create_problem_no_negatives(init, goal, path_output + '/problem.pddl')
+    if plan:
+        print("Planning: ", path_domain, path_dir)
+        plan_mp(path_domain, path_output+'/problem.pddl')
+        print("Done")
+    else:
+        print("Planning skiped!")
     save_plan_img(cvt_ttotran_MP(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec, SIZE_H, SIZE_W)
     export_problem_pgr(init, path_output+ '/')
     traces = cvt_trantotrace(cvt_ttotran_MP(init,pddl_actions),pddl_actions)
