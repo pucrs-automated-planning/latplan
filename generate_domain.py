@@ -15,7 +15,8 @@ from latplan.util.plot import *
 import numpy as np
 #Latent layer size
 N = 36
-FD_PATH = '../../fast_downward/'
+FD_PATH = '../fast_downward/'
+MP_PATH = '../MauPlanner/'
 SIZE_H = 42
 SIZE_W = 42
 
@@ -318,6 +319,17 @@ def cvt_ttotran_FD(init,pddl_actions='pddl_actions.csv',path='sas_plan'):
     transitions = convert_traces_to_transitions(init, trace, pddl_actions)
     return transitions
 
+def cvt_ttotran_MP(init,pddl_actions='pddl_actions.csv',path='sas_plan'):
+    raw_trace = open(path, 'r')
+    trace = []
+    for line in raw_trace:
+        if 'Planning' in line:
+            continue
+        trace.append(line.split()[0].replace('(', '').replace(')', '').replace("	", ""))
+    transitions = convert_traces_to_transitions(init, trace, pddl_actions)
+    return transitions
+
+
 def cvt_trantotrace(transitions,actions='pddl_actions.csv'):
     tuples = []
     for x in range(len(transitions)-1):
@@ -339,6 +351,10 @@ def cvt_trantotrace(transitions,actions='pddl_actions.csv'):
 def plan_fd(path_domain, path_problem):
     #print FD_PATH+'fast_downward.py'
     call([FD_PATH+'fast-downward.py', path_domain, path_problem, '--search' ,'astar(lmcut())'])
+
+def plan_mp(path_domain, path_problem):
+    f = open("sas_plan", "w")
+    call(['ruby', MP_PATH+'MauPlanner.rb', path_domain, path_problem, '-a', 'blindc'], stdout=f)
 
 def percentage_slice(_list, per):
     new_size = int (len(_list) * per)
@@ -415,6 +431,7 @@ def module_create_domain(actions, domain, output_dir):
 
 
 def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_actions='pddl_actions.csv', obs=100):
+    print("Working on:", path_domain, path_dir)
     enc_dec = EncoderDecoder(network_folder)
     onlyfiles = [f for f in listdir(path_dir) if isfile(join(path_dir, f))]
     img_init = enc_dec._open_image(path_dir+'/init.png')
@@ -433,12 +450,15 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
             raise
 
     create_problem(init, goal, path_output + '/problem.pddl')
-    plan_fd(path_domain, path_output+'/problem.pddl')
-    save_plan_img(cvt_ttotran_FD(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec, SIZE_H, SIZE_W)
+    print("Planning: ", path_domain, path_dir)
+    plan_mp(path_domain, path_output+'/problem.pddl')
+    print("Done")
+    save_plan_img(cvt_ttotran_MP(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec, SIZE_H, SIZE_W)
     export_problem_pgr(init, path_output+ '/')
-    traces = cvt_trantotrace(cvt_ttotran_FD(init,pddl_actions),pddl_actions)
+    traces = cvt_trantotrace(cvt_ttotran_MP(init,pddl_actions),pddl_actions)
     p_traces = percentage_slice(traces, float(obs)/100.0)
     call(['cp', path_domain, path_output+ '/' +'domain.pddl'])
+    call(['cp', 'sas_plan', path_output+ '/' +'log.txt'])
     export_trace_obs(p_traces, path_output + '/obs.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
