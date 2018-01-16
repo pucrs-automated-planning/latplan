@@ -124,10 +124,10 @@
 ./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb01 output/pb01_hanoi_out_10 domains/hanoi_actions.csv 10
 
 ./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_100 domains/hanoi_actions.csv 100 True
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_70 domains/hanoi_actions.csv 70
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_50 domains/hanoi_actions.csv 50
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_30 domains/hanoi_actions.csv 30
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_10 domains/hanoi_actions.csv 10
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_70 domains/hanoi_actions.csv 70 True
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_50 domains/hanoi_actions.csv 50 True
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_30 domains/hanoi_actions.csv 30 True
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb02 output/pb02_hanoi_out_10 domains/hanoi_actions.csv 10 True
 
 ./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb03 output/pb03_hanoi_out_100 domains/hanoi_actions.csv 100 True
 ./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb03 output/pb03_hanoi_out_70 domains/hanoi_actions.csv 70
@@ -148,7 +148,7 @@
 ./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb05 output/pb05_hanoi_out_10 domains/hanoi_actions.csv 10
 
 ./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_100 domains/hanoi_actions.csv 100 True
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_70 domains/hanoi_actions.csv 70
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_50 domains/hanoi_actions.csv 50
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_30 domains/hanoi_actions.csv 30
-./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_10 domains/hanoi_actions.csv 10
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_70 domains/hanoi_actions.csv 70 True
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_50 domains/hanoi_actions.csv 50 True
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_30 domains/hanoi_actions.csv 30 True
+./generate_domain.py recon samples/hanoi_4_3_36_81_conv/ domains/hanoi_domain.pddl problems/hanoi/pb06 output/pb06_hanoi_out_10 domains/hanoi_actions.csv 10 True

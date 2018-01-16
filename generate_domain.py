@@ -163,7 +163,7 @@ def export_problem_pgr(init_state,path=''):
     txt += '    (:init\n'
     for pre in range(len(init_state)):
         if init_state[pre]:  txt+='       ('+ 'p' + str(pre) + ')' +'\n'
-        else: txt+='       (not ('+ 'p' + str(pre) + '))' +'\n'
+#        else: txt+='       (not ('+ 'p' + str(pre) + '))' +'\n'
     txt += '    )\n'
     txt += '    (:goal\n'
     txt += '      (and\n'
