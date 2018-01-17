@@ -167,7 +167,7 @@ def export_problem_pgr(init_state,path=''):
     txt += '    )\n'
     txt += '    (:goal\n'
     txt += '      (and\n'
-    txt += '            <HYPOTHESIS>'
+    txt += '            <HYPOTHESIS>\n'
     txt += '      )\n'
     txt += '    )\n)'
     data = open(path+'template.pddl', 'w')
@@ -483,11 +483,15 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
         print("Planning skiped!")
     save_plan_img(cvt_ttotran_MP(init.tolist(),pddl_actions), path_output + '/plan.png', enc_dec, SIZE_H, SIZE_W)
     export_problem_pgr(init, path_output+ '/')
+    transitions = cvt_ttotran_MP(init,pddl_actions)
     traces = cvt_trantotrace(cvt_ttotran_MP(init,pddl_actions),pddl_actions)
     p_traces = percentage_slice(traces, float(obs)/100.0)
     call(['cp', path_domain, path_output+ '/' +'domain.pddl'])
     call(['cp', 'sas_plan', path_output+ '/' +'log.txt'])
-    export_trace_obs(p_traces, path_output + '/obs.dat')
+    export_trace_obs(p_traces, path_output + '/obs2.dat')
+    #transitions[0] = transitions[0].tolist()
+    #print(transitions)
+    export_hypothesis(transitions, path_output + '/obs.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
 
