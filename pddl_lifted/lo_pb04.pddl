@@ -1,4 +1,4 @@
-(define (problem pb1)
+(define (problem pb4)
   (:domain lights)
   (:objects
     c01 c02 c03 c04
@@ -7,10 +7,10 @@
     c13 c14 c15 c16
   )
   (:init
-    (on  c01) (on  c02)           (on c04)
-    (on  c05) (on  c06) (on  c07) (on c08)
-    (on  c09) (on  c10)           (on c12)
-                        (on  c15) (on c16)
+    (on c01)                   (on c04)
+             (on c06) (on c07) (on c08)
+    (on c09) (on c10) (on c11) (on c12)
+                      (on c15) (on c16)
     (corner c01) (border c02) (border c03) (corner c04)
     (border c05) (center c06) (center c07) (border c08)
     (border c09) (center c10) (center c11) (border c12)
