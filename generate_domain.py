@@ -488,10 +488,10 @@ def set_up_pgr(network_folder,path_domain, path_dir, path_output='out1', pddl_ac
     p_traces = percentage_slice(traces, float(obs)/100.0)
     call(['cp', path_domain, path_output+ '/' +'domain.pddl'])
     call(['cp', 'sas_plan', path_output+ '/' +'log.txt'])
-    export_trace_obs(p_traces, path_output + '/obs2.dat')
+    export_trace_obs(p_traces, path_output + '/obs.dat')
     #transitions[0] = transitions[0].tolist()
     #print(transitions)
-    export_hypothesis(transitions, path_output + '/obs.dat')
+    export_hypothesis(transitions, path_output + '/obs2.dat')
     export_hypothesis(candidate_goals, path=path_output + '/' + 'hyps.dat')
     export_hypothesis([goal], path=path_output+ '/' +'real_hyp.dat')
 
