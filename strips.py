@@ -277,6 +277,14 @@ def main():
                 return str
         
         globals()[task](*map(myeval,sys.argv))
+
+def set_globals(enc, md):
+    global encoder, mode
+    if enc not in default_networks:
+            raise ValueError("invalid encoder!: {}".format(enc))
+    encoder = enc
+    mode = md
+
     
 if __name__ == '__main__':
     main()
