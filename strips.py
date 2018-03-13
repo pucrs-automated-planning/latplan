@@ -7,10 +7,11 @@ from latplan.model import default_networks
 from latplan.util        import curry
 from latplan.util.tuning import grid_search, nn_task
 from latplan.util.noise  import gaussian
-
+import scipy.misc as misc
 import keras.backend as K
 import tensorflow as tf
 
+HARD_CODED_DATASET = 'new_datasets/masks/'
 
 float_formatter = lambda x: "%.5f" % x
 np.set_printoptions(formatter={'float_kind':float_formatter})
@@ -219,6 +220,59 @@ def hanoi(disks=7,towers=4,N=36,num_examples=6500):
     dump_states (ae,states,repeat=100)
     dump_all_actions(ae,configs,        lambda configs: p.transitions(disks,towers,configs),repeat=100)
     dump_all_states(ae,configs,        lambda configs: p.states(disks,towers,configs),repeat=100)
+
+def load_dataset(path, n=10000):
+    from os import listdir
+    from os.path import isfile, join
+    onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+    datalist = [];
+    counter = 0;
+    for d in onlyfiles:
+        print(d)
+        d = path+d
+        datalist.append(misc.imread(d.split(" ")[0]))
+        counter += 1;
+        if counter == n: break;
+    return datalist
+#Real hanoi, not using generator to avoid modificaitons in the run method
+def hanoi_real(disks=7,towers=4,N=36,num_examples=6500):
+    parameters = {
+        'layer'      :[1000],# [400,4000],
+        'clayer'     :[12],# [400,4000],
+        'dropout'    :[0.6], #[0.1,0.4],
+        'noise'      :[0.4],
+        'N'          :[N],  #[25,49],
+        'dropout_z'  :[False],
+        'activation' : ['tanh'],
+        'full_epoch' :[1000],
+        'epoch'      :[1000],
+        'lr_epoch'   :[0.01],
+        'batch_size' :[500],
+        'optimizer'  :['adam'],
+        'lr'         :[0.001],
+    }
+    print("this setting is tuned for conv")
+    import latplan.puzzles.hanoi as p
+    configs = load_dataset(HARD_CODED_DATASET)
+    assert len(configs) >= num_examples
+    print(len(configs))
+    random.shuffle(configs)
+    #return
+    #transitions = p.transitions(disks,towers,configs[:num_examples],one_per_state=True)
+    #states = np.concatenate((transitions[0], transitions[1]), axis=0)
+    states = np.array(configs)
+    print(states.shape)
+    train = states[:int(len(states)*0.9)]
+    test  = states[int(len(states)*0.9):]
+    print(len(train),len(test))
+    ae = run("_".join(map(str,("samples/hanoi_real",disks,towers,N,num_examples,encoder))), train, test, parameters)
+    print("*** NOTE *** if l_rec is above 0.01, it is most likely not learning the correct model")
+    show_summary(ae, train, test)
+    dump_autoencoding_image_if_necessary(ae,test[:1000],train[:1000])
+    #dump_actions(ae,transitions,repeat=100)
+    dump_states (ae,states,repeat=1)
+    #dump_all_actions(ae,configs,        lambda configs: p.transitions(disks,towers,configs),repeat=100)
+    dump_all_states(ae,configs,        lambda configs: states,repeat=1)
 
 def lightsout(type='digital',size=4,N=36,num_examples=6500):
     parameters = {

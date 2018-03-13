@@ -691,7 +691,55 @@ class ConvolutionalGumbelAE(GumbelAE):
                     Dropout(self.parameters['dropout']),
                     Dense(self.parameters['N']*self.parameters['M']),
                 ])]
+
+class ConvolutionalGumbelAE(GumbelAE):
+    def build_encoder(self,input_shape):
+        return [Reshape((*input_shape,1)),
+                GaussianNoise(self.parameters['noise']),
+                BN(),
+                *[Convolution2D(self.parameters['clayer'],(3,3),
+                                activation=self.parameters['activation'],padding='same', use_bias=False),
+                  Dropout(self.parameters['dropout']),
+                  BN(),
+                  MaxPooling2D((2,2)),],
+                *[Convolution2D(self.parameters['clayer'],(3,3),
+                                activation=self.parameters['activation'],padding='same', use_bias=False),
+                  Dropout(self.parameters['dropout']),
+                  BN(),
+                  MaxPooling2D((2,2)),],
+                flatten,
+                Sequential([
+                    Dense(self.parameters['layer'], activation=self.parameters['activation'], use_bias=False),
+                    BN(),
+                    Dropout(self.parameters['dropout']),
+                    Dense(self.parameters['N']*self.parameters['M']),
+                ])]
+
+class ConvolutionalRealGumbelAE(GumbelAE):
+    def build_encoder(self,input_shape):
+        return [Reshape((*input_shape,1)),
+                GaussianNoise(self.parameters['noise']),
+                BN(),
+                *[Convolution2D(self.parameters['clayer'],(3,3),
+                                activation=self.parameters['activation'],padding='same', use_bias=False),
+                  Dropout(self.parameters['dropout']),
+                  BN(),
+                  MaxPooling2D((2,2)),],
+                *[Convolution2D(self.parameters['clayer'],(3,3),
+                                activation=self.parameters['activation'],padding='same', use_bias=False),
+                  Dropout(self.parameters['dropout']),
+                  BN(),
+                  MaxPooling2D((2,2)),],
+                flatten,
+                Sequential([
+                    Dense(self.parameters['layer'], activation=self.parameters['activation'], use_bias=False),
+                    Dense(self.parameters['layer'], activation=self.parameters['activation'], use_bias=False),
+                    BN(),
+                    Dropout(self.parameters['dropout']),
+                    Dense(self.parameters['N']*self.parameters['M']),
+                ])]
     
+
 class Convolutional2GumbelAE(ConvolutionalGumbelAE):
     def build_decoder(self,input_shape):
         "this function did not converge well. sigh"
@@ -1260,6 +1308,7 @@ default_networks = {
     'fc2':GumbelAE2,
     'conv':ConvolutionalGumbelAE,
     'conv2':ConvolutionalGumbelAE2,
+    'convr':ConvolutionalRealGumbelAE,
     'cc' : Convolutional2GumbelAE,
     'aconv':AltConvGumbelAE,
     **{
