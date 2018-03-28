@@ -14,7 +14,7 @@ from encode_decode import EncoderDecoder
 from latplan.util.plot import *
 import numpy as np
 #Latent layer size
-N = 36
+#N = 36
 FD_PATH = '../fast_downward/'
 MP_PATH = '../MauPlanner/'
 SIZE_H = 42
@@ -105,7 +105,7 @@ def generate_all_actions(list_actions):
 #===========================================
 #============ PDDL OUTPUT ==================
 
-def export_pddl(actions, path):
+def export_pddl(actions, path, N):
     txt = '(define (domain generated-domain) \n'
     txt += '    (:requirements :strips :negative-preconditions) \n'
     txt += '    (:predicates \n'
@@ -286,7 +286,7 @@ def create_domain(actions_path, path, exp_actions='pddl_actions.csv'):
     #print( len(actions))
     pruned = prune_actions(actions)
     pddl_actions = generate_all_actions_pddl(pruned)
-    export_pddl(pddl_actions, path)
+    export_pddl(pddl_actions, path, N)
     export_actions(pruned,exp_actions)
     return len(transitions), len(actions),len(pruned)
 
@@ -559,6 +559,31 @@ def online_req(traces, possible_goals, goal):
         #print(t)
         print("Sending", t)
         #print p.stdout.readline().rstrip()
+
+def parse_obs_data(path):
+    data = open(path, 'r')
+    obs = []    
+    for d in data:
+        bit_rep = parse_pddl_state(d)
+        obs.append(bit_rep)
+    return obs
+
+#converts a pddl state to a bit representation
+def parse_pddl_state(pddl, size, remove_not=False):
+    output = [0] * size
+    if remove_not:
+        new_pddl = ""
+        split = pddl.split(",")
+        for s in split:
+            if "not" in s:
+                continue
+            else new_pddl += str(s)
+        pddl = new_pddl
+    pddl_split = pddl.replace(" ", "").replace(",","").replace(")","").replace("(","").replace("\n","").replace("[","").replace("]","")
+    pddl_split = filter(None ,pddl_split.split('p'))
+    for pddl in pddl_split:
+        output[int(pddl)] = 1
+    return output
 
 if __name__ == '__main__':
     import sys

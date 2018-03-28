@@ -1,0 +1,6 @@
+Creating domain from: samples/hanoi_4_3_25_81_conv/all_actions.csv to: domains_25/hanoi_domain.pddl
+PDDL_CSV:domains_25/hanoi_actions.csv
+Total transitions: 24000
+Distinct transitions: 409
+Actions generated: 262
+Time elapsed: 1.6036641870014137

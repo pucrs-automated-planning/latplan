@@ -1,0 +1,6 @@
+Creating domain from: samples/puzzle_mnist_3_3_25_20000_conv/all_actions.csv to: domains_25/mnist_domain.pddl
+PDDL_CSV:domains_25/mnist_actions.csv
+Total transitions: 967680
+Distinct transitions: 689868
+Actions generated: 10120
+Time elapsed: 67.71825795900077

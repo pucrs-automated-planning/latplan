@@ -11,7 +11,7 @@ import scipy.misc as misc
 import keras.backend as K
 import tensorflow as tf
 
-HARD_CODED_DATASET = 'new_datasets/masks/'
+HARD_CODED_DATASET = 'new_datasets/Binary_800x150/'
 
 float_formatter = lambda x: "%.5f" % x
 np.set_printoptions(formatter={'float_kind':float_formatter})
@@ -265,7 +265,7 @@ def hanoi_real(disks=7,towers=4,N=36,num_examples=6500):
     train = states[:int(len(states)*0.9)]
     test  = states[int(len(states)*0.9):]
     print(len(train),len(test))
-    ae = run("_".join(map(str,("samples/hanoi_real",disks,towers,N,num_examples,encoder))), train, test, parameters)
+    ae = run("_".join(map(str,("samples/hanoi_real_new",disks,towers,N,num_examples,encoder))), train, test, parameters)
     print("*** NOTE *** if l_rec is above 0.01, it is most likely not learning the correct model")
     show_summary(ae, train, test)
     dump_autoencoding_image_if_necessary(ae,test[:1000],train[:1000])

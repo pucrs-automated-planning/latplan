@@ -1,0 +1,6 @@
+Creating domain from: samples/lightsout_digital_4_25_20000_conv/all_actions.csv to: domains_25/lodigital_domain.pddl
+PDDL_CSV:domains_25/lodigital_actions.csv
+Total transitions: 1048576
+Distinct transitions: 1048576
+Actions generated: 831
+Time elapsed: 75.93625521700596

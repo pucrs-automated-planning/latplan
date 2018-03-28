@@ -1,0 +1,6 @@
+Creating domain from: samples/puzzle_spider_3_3_49_20000_conv/all_actions.csv to: domains_49/spider_domain.pddl
+PDDL_CSV:domains_49/spider_actions.csv
+Total transitions: 967680
+Distinct transitions: 966338
+Actions generated: 1092
+Time elapsed: 124.19222974998411
