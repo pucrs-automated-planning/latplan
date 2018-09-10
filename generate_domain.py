@@ -65,7 +65,7 @@ def generate_action(state1, state2):
 
 
 
-def generate_ppdl_action(parameter, pre_cond, effect, action_name):
+def generate_pddl_action(parameter, pre_cond, effect, action_name):
     action = '(:action ' + str(action_name) + '\n'
     action += '    :parameters ()\n'
     action += '    :precondition (and' + '\n'
@@ -87,7 +87,7 @@ def generate_all_actions_pddl(list_actions):
     actions = []
     counter = 1
     for a in list_actions:
-        actions.append(generate_ppdl_action(a.parameters, a.pre_cond, a.effect, 'a'+ str(counter)))
+        actions.append(generate_pddl_action(a.parameters, a.pre_cond, a.effect, 'a'+ str(counter)))
         counter += 1
     return actions
 
@@ -576,7 +576,7 @@ def parse_pddl_state(pddl, size, remove_not=False):
         for s in split:
             if "not" in s:
                 continue
-            else new_pddl += str(s)
+            else: new_pddl += str(s)
         pddl = new_pddl
     pddl_split = pddl.replace(" ", "").replace(",","").replace(")","").replace("(","").replace("\n","").replace("[","").replace("]","")
     pddl_split = filter(None ,pddl_split.split('p'))

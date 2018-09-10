@@ -1,6 +1,6 @@
 #Code to generate a pddl using variables
 #Deprecated
-def generate_ppdl_action_old(parameter, pre_cond, effect, action_name):
+def generate_pddl_action_old(parameter, pre_cond, effect, action_name):
 	action = '(:action ' + str(action_name) + '\n'
 	action += '    :parameters ('
 	for par in range(len(parameter)):
