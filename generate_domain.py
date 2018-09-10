@@ -106,17 +106,16 @@ def generate_all_actions(list_actions):
 #============ PDDL OUTPUT ==================
 
 def export_pddl(actions, path, N):
-    txt = '(define (domain generated-domain) \n'
-    txt += '    (:requirements :strips :negative-preconditions) \n'
-    txt += '    (:predicates \n'
-    for i in range(N):
-      txt += '        (p' +str(i) + ') \n'
-    txt += '    )\n'
-    for action in actions:
-      txt += action
-    txt += ')'
-    data = open(path, 'w')
-    data.write(txt)
+    with open(path, 'w') as output_file:
+        output_file.write('(define (domain generated-domain) \n')
+        output_file.write('    (:requirements :strips :negative-preconditions) \n')
+        output_file.write('    (:predicates \n')
+        for i in range(N):
+            output_file.write('        (p' +str(i) + ') \n')
+        output_file.write('    )\n')
+        for action in actions:
+            output_file.write(action)
+        output_file.write(')')
 
 
 
