@@ -236,7 +236,7 @@
     :parameters (?c ?n1 ?n2 ?n3)
     :precondition (and
       (border ?c)
-      (on ?c)
+      (not (on ?c))
       (on ?n1)
       (on ?n2)
       (not (on ?n3))
